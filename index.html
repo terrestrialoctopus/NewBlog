@@ -2,419 +2,366 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project: BLUE ATOM // 虚空终端</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>VOID_OS // 电波通信终端</title>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-
     <style>
-        /* --- 核心变量定义 --- */
         :root {
-            --bg-color: #000000;
-            --main-blue: #00ffff; /* 电光青蓝，作为主要发光色 */
-            --dim-blue: #005555;  /* 暗蓝色，用于次要元素 */
-            --scanline-color: rgba(0, 255, 255, 0.1);
-            --pixel-size: 4px; /* 控制整体像素颗粒感大小 */
+            --bg: #000000;
+            --main-blue: #00ffff;
+            --dark-blue: #003344;
+            --window-bg: rgba(0, 10, 20, 0.95); /* 稍微增加不透明度以突出内容 */
+            --border-width: 2px;
         }
 
-        /* --- 全局样式 --- */
+        * { box-sizing: border-box; cursor: crosshair; }
+
         body, html {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            background: var(--bg);
             color: var(--main-blue);
-            font-family: 'VT323', monospace; /* 使用像素风格等宽字体 */
-            font-size: 20px;
-            height: 100%;
-            overflow-x: hidden;
-            image-rendering: pixelated; /* 强制像素化渲染 */
-            cursor: crosshair; /* 复古准星光标 */
-        }
-
-        /* --- CRT 屏幕效果层 (蒸汽波/复古电视核心) --- */
-        .crt-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 999;
-            background: 
-                /* 扫描线 */
-                linear-gradient(rgba(0,0,0,0) 50%, var(--scanline-color) 50%),
-                /* 屏幕微光 */
-                radial-gradient(circle at center, rgba(0,255,255,0.05) 0%, rgba(0,0,0,0.8) 100%);
-            background-size: 100% 4px, 100% 100%;
-            animation: flicker 0.15s infinite;
-            opacity: 0.8;
-        }
-
-        /* 屏幕轻微闪烁动画 */
-        @keyframes flicker {
-            0% { opacity: 0.8; }
-            50% { opacity: 0.85; }
-            100% { opacity: 0.8; }
-        }
-
-        /* --- 背景网格 (蒸汽波元素) --- */
-        .retro-grid {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 50vh;
-            background-image: 
-                linear-gradient(var(--dim-blue) 2px, transparent 2px),
-                linear-gradient(90deg, var(--dim-blue) 2px, transparent 2px);
-            background-size: 40px 40px;
-            transform: perspective(500px) rotateX(60deg);
-            z-index: -1;
-            opacity: 0.5;
-            animation: grid-move 5s linear infinite;
-        }
-
-        @keyframes grid-move {
-            from { background-position: 0 0; }
-            to { background-position: 0 40px; }
-        }
-
-        /* --- 主容器布局 (适应PC) --- */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            display: grid;
-            grid-template-columns: 3fr 1fr; /* 左侧内容，右侧侧边栏 */
-            gap: 30px;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* --- 通用像素边框盒子 (原子朋克终端风格) --- */
-        .pixel-box {
-            border: var(--pixel-size) solid var(--main-blue);
-            padding: 20px;
-            background-color: rgba(0,0,0,0.9);
-            box-shadow: 0 0 15px var(--main-blue), inset 0 0 10px var(--dim-blue);
-            position: relative;
-            margin-bottom: 30px;
-        }
-
-        /* 模拟原子朋克风格的铆钉/接口装饰 */
-        .pixel-box::before, .pixel-box::after {
-            content: '';
-            position: absolute;
-            width: calc(var(--pixel-size) * 3);
-            height: calc(var(--pixel-size) * 3);
-            background-color: var(--main-blue);
-        }
-        .pixel-box::before { top: calc(var(--pixel-size) * -2); left: calc(var(--pixel-size) * -2); }
-        .pixel-box::after { bottom: calc(var(--pixel-size) * -2); right: calc(var(--pixel-size) * -2); }
-
-
-        /* --- Header --- */
-        header {
-            grid-column: 1 / -1;
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        h1.glitch-title {
-            font-size: 4em;
-            text-transform: uppercase;
-            letter-spacing: 5px;
-            text-shadow: 4px 4px var(--dim-blue);
-            position: relative;
-            animation: text-glitch 3s infinite alternate;
-        }
-
-        /* 简单的文字故障效果 */
-        @keyframes text-glitch {
-            0% { text-shadow: 4px 4px var(--dim-blue); }
-            2% { text-shadow: -4px -4px var(--dim-blue), 4px 0px #ffffff; transform: skewX(10deg); }
-            4% { text-shadow: 4px 4px var(--dim-blue); transform: skewX(0deg); }
-            100% { text-shadow: 4px 4px var(--dim-blue); }
-        }
-
-        /* --- 文章区域 --- */
-        article h2 {
-            border-bottom: var(--pixel-size) dashed var(--main-blue);
-            padding-bottom: 10px;
-            margin-top: 0;
-        }
-
-        article p {
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-        
-        .read-more-btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background: var(--main-blue);
-            color: var(--bg-color);
-            text-decoration: none;
-            font-weight: bold;
-            border: 2px solid var(--main-blue);
-            transition: all 0.2s;
-        }
-        
-        .read-more-btn:hover {
-            background: var(--bg-color);
-            color: var(--main-blue);
-            box-shadow: 0 0 10px var(--main-blue);
-        }
-
-        /* --- 侧边栏 & 小游戏容器 --- */
-        .sidebar-section h3 {
-            background: var(--main-blue);
-            color: var(--bg-color);
-            padding: 5px 10px;
-            margin-top: 0;
-        }
-
-        #game-container {
-            width: 100%;
-            height: 300px;
-            background: #001111;
-            border: 2px solid var(--main-blue);
-            position: relative;
+            font-family: 'VT323', monospace;
             overflow: hidden;
         }
 
-        #game-canvas {
-            display: block;
-            margin: 0 auto;
-            image-rendering: pixelated;
+        /* --- 1. 背景动画层 --- */
+        #spaceship-view {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: radial-gradient(circle at center, #001122 0%, #000 80%);
         }
+        #space-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .window-frame {
+            position: absolute; top: 5%; left: 5%; right: 5%; bottom: 10%;
+            border: 8px ridge var(--dark-blue);
+            box-shadow: inset 0 0 100px #000; pointer-events: none;
+        }
+        .denpa-boy {
+            position: absolute; bottom: 12%; right: 15%; width: 120px; height: 200px;
+            background: var(--bg); border: 2px solid var(--main-blue);
+            clip-path: polygon(40% 0%, 70% 20%, 80% 50%, 100% 100%, 0% 100%, 20% 50%, 30% 20%);
+            box-shadow: 0 0 15px var(--main-blue); animation: pulse 5s infinite ease-in-out;
+            opacity: 0.6;
+        }
+        .denpa-boy::after {
+            content: "📡 AWAITING SIGNAL..."; position: absolute; top: -25px; left: -20px; width: 150px; font-size: 14px; text-align: center;
+            animation: blink 1s infinite step-end;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 0.6; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.98); } }
+        @keyframes blink { 50% { opacity: 0; } }
 
-        .game-instructions {
-            font-size: 0.8em;
-            text-align: center;
-            margin-top: 10px;
-            color: var(--dim-blue);
+        /* --- 2. 桌面窗口系统 --- */
+        .window {
+            position: absolute; background: var(--window-bg);
+            border: var(--border-width) solid var(--main-blue);
+            box-shadow: 4px 4px 0px rgba(0, 255, 255, 0.2);
+            min-width: 300px; display: none; flex-direction: column;
         }
+        .window-header {
+            background: var(--main-blue); color: var(--bg); padding: 4px 8px;
+            display: flex; justify-content: space-between; align-items: center;
+            font-weight: bold; letter-spacing: 1px; cursor: grab;
+        }
+        .close-btn { border: 1px solid var(--bg); padding: 0 5px; cursor: pointer; font-family: monospace; }
+        .close-btn:hover { background: var(--bg); color: var(--main-blue); }
+        .window-content {
+            padding: 15px; max-height: 450px; overflow-y: auto;
+            scrollbar-width: thin; scrollbar-color: var(--main-blue) var(--dark-blue);
+        }
+        hr { border: none; border-bottom: 1px dashed var(--dark-blue); margin: 15px 0; }
+
+        /* --- 3. 任务栏 --- */
+        #taskbar {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 40px;
+            background: var(--dark-blue); border-top: 2px solid var(--main-blue);
+            display: flex; align-items: center; padding: 0 5px; z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0,255,255,0.1);
+        }
+        .start-btn {
+            background: var(--main-blue); color: var(--bg); border: none; padding: 5px 10px;
+            font-family: 'VT323'; font-weight: bold; font-size: 18px; margin-right: 15px; box-shadow: 2px 2px 0 #000;
+        }
+        .start-btn:active { box-shadow: inset 2px 2px 0 #000; transform: translate(2px, 2px); }
+        .nav-item {
+            color: var(--main-blue); margin: 0 8px; padding: 2px 5px; text-decoration: none; font-size: 18px;
+            border: 1px solid transparent;
+        }
+        .nav-item:hover { border: 1px solid var(--main-blue); background: rgba(0,255,255,0.1); }
+        #marquee-container { flex-grow: 1; overflow: hidden; white-space: nowrap; color: var(--main-blue); font-size: 16px; margin: 0 20px; opacity: 0.8; }
+        #clock { background: #000; padding: 2px 8px; border: 1px solid var(--main-blue); }
+
+        /* --- 4. 内容样式 & ASCII艺术 --- */
+        .gallery-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
         
-        /* --- Footer --- */
-        footer {
-            grid-column: 1 / -1;
+        /* ASCII 艺术容器样式 */
+        .ascii-art {
+            font-family: 'VT323', monospace; /* 确保等宽 */
+            font-size: 14px;
+            line-height: 1.1;
+            color: var(--main-blue);
+            background: #00050a; /* 比窗口背景更深一点 */
+            border: 1px dotted var(--main-blue);
+            padding: 15px;
             text-align: center;
-            padding: 20px;
-            border-top: var(--pixel-size) solid var(--dim-blue);
-            margin-top: 40px;
-            font-size: 0.8em;
+            white-space: pre; /* 保留空格和换行 */
+            overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            text-shadow: 0 0 3px var(--main-blue); /* 微微发光 */
+            transition: all 0.3s;
+        }
+        .ascii-art:hover {
+            border-style: solid;
+            box-shadow: 0 0 10px var(--main-blue);
+            transform: scale(1.02);
+        }
+        .art-title { text-align: center; margin-top: 5px; font-size: 14px; color: var(--dark-blue); }
+
+        /* 故障层 */
+        #glitch-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 255, 255, 0.02); pointer-events: none; z-index: 9999; display: none;
         }
 
-        /* --- 响应式简单处理 (虽然主打PC，但防止小屏完全错乱) --- */
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-        }
     </style>
 </head>
 <body>
 
-    <div class="crt-overlay"></div>
-    <div class="retro-grid"></div>
-
-    <div class="container">
-        <header>
-            <h1 class="glitch-title">ATOMIC://VOID_TERMINAL</h1>
-            <p>/// 8-BIT | ATOMPUNK | VAPORWAVE | BLUE_ONLY ///</p>
-        </header>
-
-        <main>
-            <article class="pixel-box">
-                <h2>[LOG_ENTRY_2049.10.27] // 霓虹废土的观察报告</h2>
-                <p>今日在第7区废墟发现高能反应。盖格计数器在疯狂鸣叫，但那种蓝色的辉光实在太迷人了。就像旧时代的广告牌溶解在了空气中。我尝试用我的复古终端记录下这一切，键盘的敲击声在空旷的金属走廊里回荡。</p>
-                <p>数据流很不稳定，可能是附近的原子反应堆泄漏干扰了信号。这就是我们现在的生活，在故障与辐射中寻找诗意...</p>
-                <a href="#" class="read-more-btn">READ_FULL_LOG >></a>
-            </article>
-
-            <article class="pixel-box">
-                <h2>[SYSTEM_ALERT] // 记忆体溢出与赛博忧郁</h2>
-                <p>为什么我在听那种放慢了的、充满了仿佛来自80年代商场背景音乐的曲子时，会感到一种从未经历过的怀旧？我的神经植入物是不是被某种蒸汽波病毒感染了？</p>
-                <p>屏幕上的扫描线越来越重了，我分不清是现实还是虚拟的幻觉。也许这都不重要，只要蓝色足够亮...</p>
-                <a href="#" class="read-more-btn">ACCESS_MEMORY >></a>
-            </article>
-        </main>
-
-        <aside>
-            <div class="pixel-box sidebar-section">
-                <h3>> RUN_ATOM_DODGER.EXE</h3>
-                <div id="game-container">
-                    <canvas id="game-canvas" width="280" height="280"></canvas>
-                    <div id="game-start-overlay" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--main-blue);color:black;padding:5px;cursor:pointer;">CLICK TO START</div>
-                </div>
-                <p class="game-instructions">Use ARROW KEYS to dodge falling atomic waste.</p>
-            </div>
-
-            <div class="pixel-box sidebar-section">
-                <h3>> OPERATOR_INFO</h3>
-                <p style="font-size: 0.9em;">
-                    STATUS: ONLINE<br>
-                    LOCATION: SECTOR 7N<br>
-                    AESTHETIC: RETRO-FUTURISM<br>
-                    <br>
-                    这个站点是为那些在数字虚空中迷失的灵魂建立的灯塔。
-                </p>
-            </div>
-        </aside>
-        
-        <footer>
-            <p>© 2077 ATOMIC VOID SYSTEMS. ALL RIGHTS RESERVED. | <a href="#" style="color:var(--main-blue)">RSS FEED</a></p>
-        </footer>
+    <div id="spaceship-view">
+        <canvas id="space-canvas"></canvas>
+        <div class="window-frame"></div>
+        <div class="denpa-boy"></div>
     </div>
 
+    <div id="taskbar">
+        <button class="start-btn">≡ SYST</button>
+        <nav>
+            <a href="#" class="nav-item" onclick="toggleWin('win-art')">[Gallery]</a>
+            <a href="#" class="nav-item" onclick="toggleWin('win-blog')">[Logs]</a>
+            <a href="#" class="nav-item" onclick="toggleWin('win-msg')">[Board]</a>
+            <a href="#" class="nav-item" onclick="toggleWin('win-about')">[About]</a>
+        </nav>
+        <div id="marquee-container">
+            <marquee scrollamount="4" scrolldelay="50">*** ALERT: VIRTUAL REALITY INTEGRITY AT 45% *** 虚空からの信号を受信中... *** STAY_BLUE // STAY_NULL ***</marquee>
+        </div>
+        <div id="clock">00:00:00</div>
+    </div>
+
+    <div id="win-art" class="window" style="top: 60px; left: 40px; width: 500px;">
+        <div class="window-header">
+            <span>> EXEC ASCII_DATA.VIEW</span>
+            <div class="close-btn" onclick="closeWin('win-art')">[X]</div>
+        </div>
+        <div class="window-content">
+            <p>正在加载缓存的图像数据...</p>
+            <hr>
+            <div class="gallery-grid">
+                <div>
+<pre class="ascii-art">
+      .  o  .
+    o   /|\   o
+   -- ( * ) --
+    o   \|/   o
+      '  o  '
+    [ATOM_CORE]
+</pre>
+                <div class="art-title">Figure.01 - 动力源</div>
+                </div>
+
+                <div>
+<pre class="ascii-art">
+  /=======\
+ |   [|]   |
+ |  ( O )  |
+ |   [|]   |
+  \=======/
+  [CYBER_EYE]
+</pre>
+                <div class="art-title">Figure.02 - 观察者</div>
+                </div>
+
+                 <div>
+<pre class="ascii-art">
+      |
+     /|\
+    //|\\
+   ///|\\\
+  ====|====
+      |
+     [#]
+ [DENPA_TOWER]
+</pre>
+                <div class="art-title">Figure.03 - 发信站</div>
+                </div>
+
+                 <div>
+<pre class="ascii-art">
+   .-"""-.
+  / _   _ \
+ | (_) (_) |
+ |    ^    |
+  \  ---  /
+   '-----'
+  [GHOST_BUG]
+</pre>
+                <div class="art-title">Figure.04 - 故障实体</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="win-blog" class="window" style="top: 120px; left: 350px; width: 400px;">
+        <div class="window-header">
+            <span>> READ SYSTEM.LOG</span>
+            <div class="close-btn" onclick="closeWin('win-blog')">[X]</div>
+        </div>
+        <div class="window-content">
+            <h3>ENTRY 2049.X.27 // 蓝色的雨</h3>
+            <p>舷窗外的雨已经下了三个周期了。它们不是水，是某种液态的蓝色光子，撞击在护盾上发出令人舒适的滋滋声。</p>
+            <p>我盯着屏幕上跳动的 ASCII 码，感觉自己也是这些字符的一部分。我的记忆是不是也被像素化了？</p>
+            <hr>
+            <h3>ENTRY 2049.X.25 // 电波少年</h3>
+            <p>角落里的那个影子今天又清晰了一些。他似乎想通过脑电波发送什么信息。是警告？还是单纯的问候？</p>
+        </div>
+    </div>
+
+    <div id="win-about" class="window" style="top: 250px; left: 100px;">
+        <div class="window-header">
+            <span>> INFO /?</span>
+            <div class="close-btn" onclick="closeWin('win-about')">[X]</div>
+        </div>
+        <div class="window-content" style="text-align: center;">
+            <pre style="color: var(--dark-blue);">
+ _________________
+< VOID_OS v1.02 >
+ -----------------
+        \   ^__^
+         \  (oo)\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
+            </pre>
+            <p>OPERATOR: [REDACTED]</p>
+            <p>STYLE: 8-BIT / ATOMPUNK / VAPOR</p>
+            <hr>
+            <p>这个站点是数字虚空中漂浮的一个数据节点。献给所有在深夜盯着屏幕发呆的灵魂。</p>
+        </div>
+    </div>
+
+     <div id="win-msg" class="window" style="top: 180px; left: 500px; width: 350px;">
+        <div class="window-header">
+            <span>> COMMS_CHANNEL.BAT</span>
+            <div class="close-btn" onclick="closeWin('win-msg')">[X]</div>
+        </div>
+        <div class="window-content">
+            <div style="border: 1px dotted var(--main-blue); background: #00050a; padding: 10px; height: 150px; overflow-y: scroll; margin-bottom: 15px; font-size: 14px;">
+                <span style="color: var(--dark-blue);">[SYSTEM]:</span> Channel Open.<br>
+                <span>> Glitch_01:</span> 这里就像是98年的互联网坟墓。<br>
+                <span>> Neo:</span> ASCII 艺术太赞了。<br>
+                <span>> VoidWalker:</span> 有人听到背景里的杂音了吗？
+            </div>
+            <div style="display: flex;">
+            <input type="text" placeholder="INPUT MSG..." style="flex-grow: 1; background:transparent; border:1px solid var(--main-blue); color:var(--main-blue); padding: 5px; font-family: inherit;">
+            <button style="background:var(--main-blue); color:var(--bg); border:none; padding: 5px 10px; font-family: inherit; cursor: pointer; font-weight: bold;">SEND</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="glitch-overlay"></div>
+
     <script>
-        const canvas = document.getElementById('game-canvas');
-        const ctx = canvas.getContext('2d');
-        const startOverlay = document.getElementById('game-start-overlay');
-        
-        let gameRunning = false;
-        let score = 0;
-        let animationId;
-
-        // 游戏配色 (严格遵守蓝/黑)
-        const GAME_COLOR = '#00ffff';
-        const BG_COLOR = '#001111';
-
-        // 玩家飞船
-        const player = {
-            x: canvas.width / 2 - 10,
-            y: canvas.height - 20,
-            width: 20,
-            height: 10,
-            color: GAME_COLOR,
-            dx: 0
-        };
-
-        // 障碍物 (原子废料)
-        let obstacles = [];
-
-        // 键盘控制
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight') player.dx = 4;
-            if (e.key === 'ArrowLeft') player.dx = -4;
-        });
-
-        document.addEventListener('keyup', (e) => {
-            if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') player.dx = 0;
-        });
-
-        startOverlay.addEventListener('click', startGame);
-
-        function startGame() {
-            if (gameRunning) return;
-            gameRunning = true;
-            startOverlay.style.display = 'none';
-            score = 0;
-            obstacles = [];
-            player.x = canvas.width / 2 - 10;
-            updateGame();
-        }
-
-        function drawPlayer() {
-            ctx.fillStyle = player.color;
-            // 简单的像素飞船形状
-            ctx.fillRect(player.x, player.y, player.width, player.height);
-            ctx.fillRect(player.x + 5, player.y - 5, 10, 5);
-        }
-
-        function drawObstacles() {
-            ctx.fillStyle = GAME_COLOR;
-            obstacles.forEach(obs => {
-                // 简单的像素废料块
-                ctx.fillRect(obs.x, obs.y, obs.size, obs.size);
-                // 加一点内部细节让它看起来像危险品
-                ctx.fillStyle = BG_COLOR;
-                ctx.fillRect(obs.x+2, obs.y+2, obs.size-4, obs.size-4);
-                ctx.fillStyle = GAME_COLOR;
-                ctx.fillRect(obs.x+obs.size/2-2, obs.y+obs.size/2-2, 4, 4);
-            });
-        }
-
-        function drawScore() {
-            ctx.fillStyle = GAME_COLOR;
-            ctx.font = "16px 'VT323', monospace";
-            ctx.fillText('SCORE: ' + score, 10, 20);
-        }
-
-        function gameOver() {
-            gameRunning = false;
-            cancelAnimationFrame(animationId);
-            ctx.fillStyle = 'rgba(0,0,0,0.8)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.fillStyle = GAME_COLOR;
-            ctx.font = "24px 'VT323', monospace";
-            ctx.textAlign = 'center';
-            ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2);
-            ctx.font = "16px 'VT323', monospace";
-            ctx.fillText('CLICK TO RESTART', canvas.width / 2, canvas.height / 2 + 30);
-            
-            startOverlay.style.display = 'block';
-            startOverlay.textContent = "RESTART SYSTEM";
-        }
-
-        function updateGame() {
-            if (!gameRunning) return;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = BG_COLOR;
-            ctx.fillRect(0,0,canvas.width, canvas.height);
-
-            // 移动玩家
-            player.x += player.dx;
-            // 边界检查
-            if (player.x < 0) player.x = 0;
-            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
-
-            // 生成障碍物
-            if (Math.random() < 0.03) {
-                obstacles.push({
-                    x: Math.random() * (canvas.width - 15),
-                    y: -15,
-                    size: 15,
-                    speed: 2 + Math.random() * 2
-                });
+        // --- 窗口管理器 ---
+        let zIndexCounter = 10;
+        function toggleWin(id) {
+            const win = document.getElementById(id);
+            if (!win) return;
+            if (getComputedStyle(win).display === 'none') {
+                win.style.display = 'flex';
+                bringToFront(win);
+            } else {
+                bringToFront(win);
             }
-
-            // 更新障碍物
-            obstacles.forEach((obs, index) => {
-                obs.y += obs.speed;
-
-                // 碰撞检测
-                if (
-                    player.x < obs.x + obs.size &&
-                    player.x + player.width > obs.x &&
-                    player.y < obs.y + obs.size &&
-                    player.y + player.height > obs.y
-                ) {
-                    gameOver();
-                }
-
-                // 移除掉落屏幕外的
-                if (obs.y > canvas.height) {
-                    obstacles.splice(index, 1);
-                    score += 10;
-                }
-            });
-
-            drawPlayer();
-            drawObstacles();
-            drawScore();
-
-            animationId = requestAnimationFrame(updateGame);
         }
+        function closeWin(id) { document.getElementById(id).style.display = 'none'; }
+        function bringToFront(win) { win.style.zIndex = ++zIndexCounter; }
 
-        // 初始画面
-        ctx.fillStyle = BG_COLOR;
-        ctx.fillRect(0,0,canvas.width, canvas.height);
-        drawScore();
+        // 使窗口可拖动
+        function makeDraggable(elmnt) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            const header = elmnt.querySelector('.window-header');
+            if (header) {
+                header.onmousedown = dragMouseDown;
+            }
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+                bringToFront(elmnt);
+            }
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+            }
+            function closeDragElement() { document.onmouseup = null; document.onmousemove = null; }
+        }
+        document.querySelectorAll('.window').forEach(win => {
+            makeDraggable(win);
+            win.addEventListener('mousedown', () => bringToFront(win));
+        });
+
+        // 初始打开几个窗口
+        setTimeout(() => { toggleWin('win-blog'); }, 500);
+        setTimeout(() => { toggleWin('win-art'); bringToFront(document.getElementById('win-art'));}, 800);
+
+
+        // --- 背景动画 (Canvas) ---
+        const canvas = document.getElementById('space-canvas');
+        const ctx = canvas.getContext('2d');
+        let stars = [], rain = [];
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
+        for(let i=0; i<150; i++) stars.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, size: Math.random()*1.5, blink: Math.random() });
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // 星星
+            ctx.fillStyle = "#00ffff";
+            stars.forEach(s => {
+                ctx.globalAlpha = 0.3 + Math.sin(Date.now() * 0.005 * s.blink) * 0.3;
+                ctx.fillRect(s.x, s.y, s.size, s.size);
+            });
+            // 像素雨
+            ctx.globalAlpha = 0.6;
+            if(Math.random() < 0.4) rain.push({ x: Math.random()*canvas.width, y: -20, l: Math.random()*30 + 10, v: Math.random()*5 + 10 });
+            rain.forEach((r, i) => {
+                ctx.fillRect(r.x, r.y, 1, r.l);
+                r.y += r.v;
+                if(r.y > canvas.height + 50) rain.splice(i, 1);
+            });
+            requestAnimationFrame(draw);
+        }
+        draw();
+
+        // 时钟与故障
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toTimeString().split(' ')[0];
+        }, 1000);
+        setInterval(() => {
+            const overlay = document.getElementById('glitch-overlay');
+            if(Math.random() > 0.7) {
+                overlay.style.display = 'block';
+                overlay.style.backgroundColor = Math.random() > 0.5 ? 'rgba(0,255,255,0.03)' : 'rgba(0,0,0,0.1)';
+                setTimeout(() => overlay.style.display = 'none', Math.random() * 150);
+            }
+        }, 2000);
     </script>
 </body>
 </html>
